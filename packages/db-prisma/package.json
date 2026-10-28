@@ -1,0 +1,65 @@
+{
+  "name": "@mysamyr/db-prisma",
+  "version": "0.1.0-beta.1",
+  "description": "Prisma database adapter for Keychain",
+  "author": "Mysamyr",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./schema.prisma": "./schema.prisma",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "schema.prisma"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mysamyr/keychain.git",
+    "directory": "packages/db-prisma"
+  },
+  "homepage": "https://github.com/Mysamyr/keychain/tree/main/packages/db-prisma#readme",
+  "bugs": {
+    "url": "https://github.com/Mysamyr/keychain/issues"
+  },
+  "keywords": [
+    "auth",
+    "authentication",
+    "self-hosted",
+    "keychain",
+    "prisma",
+    "database"
+  ],
+  "scripts": {
+    "build": "tsdown src/index.ts --format esm --dts --clean",
+    "build:dev": "tsdown src/index.ts --format esm --dts --clean --watch",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "@prisma/client": "^7.10.1"
+  },
+  "dependencies": {
+    "@mysamyr/core": "0.1.0-beta.1"
+  },
+  "devDependencies": {
+    "@prisma/client": "^7.10.1",
+    "@types/node": "^26.6.5",
+    "prisma": "^7.10.1"
+  }
+}

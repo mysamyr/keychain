@@ -1,0 +1,62 @@
+{
+  "name": "@mysamyr/react",
+  "version": "0.1.0-beta.1",
+  "description": "React provider and hooks for Keychain",
+  "author": "Mysamyr",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mysamyr/keychain.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/Mysamyr/keychain/tree/main/packages/react#readme",
+  "bugs": {
+    "url": "https://github.com/Mysamyr/keychain/issues"
+  },
+  "keywords": [
+    "auth",
+    "authentication",
+    "self-hosted",
+    "keychain",
+    "react",
+    "hooks"
+  ],
+  "scripts": {
+    "build": "tsdown src/index.ts --format esm --dts --clean --config tsdown.config.mjs",
+    "build:dev": "tsdown src/index.ts --format esm --dts --watch --config tsdown.config.mjs",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "dependencies": {
+    "@mysamyr/client": "0.1.0-beta.1",
+    "@mysamyr/core": "0.1.0-beta.1",
+    "swr": "^2.5.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0"
+  }
+}

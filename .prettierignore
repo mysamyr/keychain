@@ -1,0 +1,9 @@
+node_modules
+.husky
+.idea
+.vscode
+.git
+/assets
+dist
+package-lock.json
+apps/api-example/src/generated/

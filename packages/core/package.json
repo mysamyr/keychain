@@ -1,0 +1,65 @@
+{
+  "name": "@mysamyr/core",
+  "version": "0.1.0-beta.1",
+  "description": "Framework-agnostic authentication core for Keychain",
+  "author": "Mysamyr",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./endpoints": {
+      "types": "./dist/endpoints.d.mts",
+      "default": "./dist/endpoints.mjs"
+    },
+    "./schemas": {
+      "types": "./dist/schemas.d.mts",
+      "default": "./dist/schemas.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mysamyr/keychain.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/Mysamyr/keychain/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/Mysamyr/keychain/issues"
+  },
+  "keywords": [
+    "auth",
+    "authentication",
+    "self-hosted",
+    "keychain"
+  ],
+  "scripts": {
+    "build": "tsdown src/index.ts src/endpoints.ts src/schemas.ts --format esm --dts --clean",
+    "build:dev": "tsdown src/index.ts src/endpoints.ts src/schemas.ts --format esm --dts --clean --watch",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "jose": "^6.2.13",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5"
+  }
+}

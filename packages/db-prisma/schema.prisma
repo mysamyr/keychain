@@ -1,0 +1,75 @@
+// Copy these models into your application's Prisma schema.
+// Keep your own generator, datasource, and additional models.
+
+model User {
+  id                          String    @id @default(cuid())
+  email                       String    @unique
+  passwordHash                String?
+  passwordResetTokenHash      String?   @unique
+  passwordResetExpiresAt      DateTime?
+  isEmailVerified             Boolean   @default(false)
+  verificationTokenHash       String?   @unique
+  verificationTokenExpiresAt  DateTime?
+  googleId                    String?   @unique
+  lastVerificationEmailSentAt DateTime?
+  pendingEmail                String?
+  pendingEmailTokenHash       String?   @unique
+  pendingEmailTokenExpiresAt  DateTime?
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+  sessions                    Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id                     String                  @id @default(cuid())
+  tokenHash              String                  @unique
+  reauthenticationSentAt DateTime?
+  userId                 String
+  expiresAt              DateTime
+  userAgent              String
+  ip                     String
+  createdAt              DateTime                @default(now())
+  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reauthenticationGrants ReauthenticationGrant[]
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model ReauthenticationGrant {
+  tokenHash String   @id
+  userId    String
+  sessionId String
+  action    String
+  kind      String
+  codeHash  String?
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([expiresAt])
+  @@map("reauthentication_grants")
+}
+
+model EmailOutbox {
+  id            String    @id @default(cuid())
+  dedupeKey     String    @unique
+  event         String
+  payload       String?
+  status        String    @default("pending")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  lockedUntil   DateTime?
+  lastError     String?
+  createdAt     DateTime  @default(now())
+  sentAt        DateTime?
+
+  @@index([status, nextAttemptAt])
+  @@index([createdAt])
+  @@map("email_outbox")
+}

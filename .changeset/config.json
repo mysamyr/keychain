@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@4.0.1/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [
+    [
+      "@mysamyr/core",
+      "@mysamyr/client",
+      "@mysamyr/db-prisma",
+      "@mysamyr/email-nodemailer",
+      "@mysamyr/express",
+      "@mysamyr/react",
+      "@mysamyr/ui"
+    ]
+  ],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "master",
+  "updateInternalDependencies": "patch",
+  "ignore": ["@mysamyr/api-example", "@mysamyr/web-example"],
+  "privatePackages": { "version": false, "tag": false }
+}

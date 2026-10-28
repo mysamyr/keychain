@@ -1,0 +1,61 @@
+{
+  "name": "@mysamyr/express",
+  "version": "0.1.0-beta.1",
+  "description": "Express router and middleware for Keychain",
+  "author": "Mysamyr",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mysamyr/keychain.git",
+    "directory": "packages/express"
+  },
+  "homepage": "https://github.com/Mysamyr/keychain/tree/main/packages/express#readme",
+  "bugs": {
+    "url": "https://github.com/Mysamyr/keychain/issues"
+  },
+  "keywords": [
+    "auth",
+    "authentication",
+    "self-hosted",
+    "keychain",
+    "express",
+    "middleware"
+  ],
+  "scripts": {
+    "build": "tsdown src/index.ts --format esm --dts --clean",
+    "build:dev": "tsdown src/index.ts --format esm --dts --watch",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "express": "^5.3.0"
+  },
+  "dependencies": {
+    "@mysamyr/core": "0.1.0-beta.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6"
+  }
+}

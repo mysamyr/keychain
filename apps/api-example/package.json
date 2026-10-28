@@ -1,0 +1,37 @@
+{
+  "name": "@mysamyr/api-example",
+  "version": "1.0.0",
+  "description": "Express API example app for Keychain",
+  "author": "Mysamyr",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "generate": "prisma generate",
+    "dev:migration": "prisma migrate dev",
+    "predev": "npm run generate",
+    "dev": "tsx watch --env-file=.env src/index.ts",
+    "prebuild": "npm run generate",
+    "build": "tsc",
+    "pretypecheck": "npm run generate",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mysamyr/core": "0.1.0-beta.1",
+    "@mysamyr/db-prisma": "0.1.0-beta.1",
+    "@mysamyr/email-nodemailer": "0.1.0-beta.1",
+    "@mysamyr/express": "0.1.0-beta.1",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "cors": "^2.8.6",
+    "express": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "prisma": "^7.10.1",
+    "tsx": "^4.23.15"
+  }
+}

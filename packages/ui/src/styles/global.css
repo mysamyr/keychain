@@ -1,0 +1,74 @@
+@import 'tailwindcss/theme.css' prefix(kc);
+@import 'tailwindcss/utilities.css';
+
+@source '../';
+
+/* Token names must not collide with the public --kc-* customization variables. */
+@theme inline {
+  --color-accent: var(--kc-color-primary, #2563eb);
+  --color-accent-hover: var(--kc-color-primary-hover, #1d4ed8);
+  --color-accent-light: var(--kc-color-primary-light, #eff6ff);
+  --color-critical: var(--kc-color-danger, #dc2626);
+  --color-critical-hover: var(--kc-color-danger-hover, #b91c1c);
+  --color-critical-light: var(--kc-color-danger-light, #fef2f2);
+  --color-positive: var(--kc-color-success, #16a34a);
+  --color-positive-light: var(--kc-color-success-light, #f0fdf4);
+  --radius-card: var(--kc-border-radius, 0.75rem);
+  --radius-input: var(--kc-input-radius, 0.5rem);
+  --font-body: var(
+    --kc-font-family,
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif
+  );
+}
+
+/* Minimal reset limited to Keychain components; zero specificity so utilities win. */
+:where([data-kc], [data-kc] *, [data-kc] ::before, [data-kc] ::after) {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0 solid;
+}
+
+:where([data-kc]) {
+  font-family: var(--kc-font-family, 'Inter', system-ui, sans-serif);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+:where(
+  [data-kc] button,
+  [data-kc] input,
+  [data-kc] select,
+  [data-kc] textarea
+) {
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+}
+
+:where([data-kc] button) {
+  cursor: pointer;
+}
+
+:where([data-kc] h1, [data-kc] h2, [data-kc] h3, [data-kc] p) {
+  font-size: inherit;
+  font-weight: inherit;
+  overflow-wrap: break-word;
+}
+
+:where([data-kc] a) {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+:where([data-kc] ul, [data-kc] ol) {
+  list-style: none;
+}
+
+:where([data-kc] svg, [data-kc] img) {
+  display: block;
+  vertical-align: middle;
+}

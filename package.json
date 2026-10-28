@@ -1,0 +1,85 @@
+{
+  "name": "keychain",
+  "version": "0.0.0",
+  "description": "Keychain authentication library monorepo",
+  "author": "Mysamyr",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.0.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "packages/client",
+    "packages/core",
+    "packages/db-prisma",
+    "packages/email-nodemailer",
+    "packages/express",
+    "packages/react",
+    "packages/ui",
+    "apps/api-example",
+    "apps/web-example"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,client -c cyan,magenta \"npm run dev:api\" \"npm run dev:client\"",
+    "dev:api": "npm -w @mysamyr/api-example run dev",
+    "dev:client": "npm -w @mysamyr/web-example run dev",
+    "clean": "rimraf packages/*/dist && rimraf apps/*/dist && rimraf packages/db-prisma/src/generated apps/api-example/src/generated",
+    "build": "npm run build:core && npm run build:client && npm run build:db-prisma && npm run build:email-nodemailer && npm run build:express && npm run build:react && npm run build:ui",
+    "build:client": "npm -w @mysamyr/client run build",
+    "build:core": "npm -w @mysamyr/core run build",
+    "build:db-prisma": "npm -w @mysamyr/db-prisma run build",
+    "build:email-nodemailer": "npm -w @mysamyr/email-nodemailer run build",
+    "build:express": "npm -w @mysamyr/express run build",
+    "build:react": "npm -w @mysamyr/react run build",
+    "build:ui": "npm -w @mysamyr/ui run build",
+    "typecheck": "npm run typecheck:client && npm run typecheck:core && npm run typecheck:db-prisma && npm run typecheck:email-nodemailer && npm run typecheck:express && npm run typecheck:react && npm run typecheck:ui && npm run typecheck:api-example && npm run typecheck:web-example",
+    "typecheck:client": "npm -w @mysamyr/client run typecheck",
+    "typecheck:core": "npm -w @mysamyr/core run typecheck",
+    "typecheck:db-prisma": "npm -w @mysamyr/db-prisma run typecheck",
+    "typecheck:email-nodemailer": "npm -w @mysamyr/email-nodemailer run typecheck",
+    "typecheck:express": "npm -w @mysamyr/express run typecheck",
+    "typecheck:react": "npm -w @mysamyr/react run typecheck",
+    "typecheck:ui": "npm -w @mysamyr/ui run typecheck",
+    "typecheck:api-example": "npm -w @mysamyr/api-example run typecheck",
+    "typecheck:web-example": "npm -w @mysamyr/web-example run typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "pack:check": "npm run build && node scripts/check-packages.mjs",
+    "changeset": "changeset",
+    "version-packages": "changeset version && npm install --package-lock-only",
+    "release": "node scripts/publish-packages.mjs && changeset tag",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@changesets/cli": "^3.0.3",
+    "concurrently": "^10.0.6",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "husky": "^9.1.7",
+    "jiti": "^2.7.0",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10",
+    "publint": "^0.3.25",
+    "rimraf": "^6.1.3",
+    "tsdown": "^0.23.2",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix"
+    ],
+    "*.{ts,tsx,css,json,md}": [
+      "prettier --write"
+    ]
+  }
+}
