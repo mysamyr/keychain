@@ -9,12 +9,15 @@ import type { TokenManager } from '../managers/TokenManager.js';
 import type { AuthEvents } from '../observability/events.js';
 import {
   changePasswordSchema,
+  cancelEmailChangeSchema,
   confirmEmailChangeSchema,
   updateProfileSchema,
   verifyEmailSchema,
 } from '../schemas/auth.js';
 import { HEX_TOKEN_PATTERN, hashToken } from '../utils/crypto.js';
 import {
+  EmailChangeConflictError,
+  EmailChangePendingError,
   InvalidCredentialsError,
   PasswordRequiredError,
   TokenInvalidError,
@@ -162,6 +165,7 @@ export class ProfileService {
     if (!user.passwordHash) {
       throw new PasswordRequiredError();
     }
+    this.assertNoPendingEmailChange(user);
     if (await this.db.getUserByEmail(email)) {
       throw new UserAlreadyExistsError();
     }
@@ -178,6 +182,7 @@ export class ProfileService {
       if (!current.passwordHash) {
         throw new PasswordRequiredError();
       }
+      this.assertNoPendingEmailChange(current);
       await this.reauthentication.authorize(
         tx,
         current,
@@ -204,6 +209,23 @@ export class ProfileService {
       );
       return updated;
     });
+  }
+
+  async cancelEmailChange(
+    userId: string,
+    expectedPendingEmail: string
+  ): Promise<void> {
+    const { expectedEmail } = parseInput(cancelEmailChangeSchema, {
+      expectedEmail: expectedPendingEmail,
+    });
+    const user = await this.getProfile(userId);
+    if (!user.pendingEmail) return;
+    if (user.pendingEmail !== expectedEmail) {
+      throw new EmailChangeConflictError();
+    }
+    if (!(await this.db.cancelPendingEmailChange(userId, expectedEmail))) {
+      throw new EmailChangeConflictError();
+    }
   }
 
   async confirmEmailChange(token: string, locale?: string): Promise<User> {
@@ -293,6 +315,16 @@ export class ProfileService {
       );
     });
     this.events.emit({ type: 'account.deleted', userId });
+  }
+
+  private assertNoPendingEmailChange(user: User): void {
+    if (
+      user.pendingEmail &&
+      user.pendingEmailTokenExpiresAt &&
+      user.pendingEmailTokenExpiresAt.getTime() > Date.now()
+    ) {
+      throw new EmailChangePendingError();
+    }
   }
 
   private async getCurrent(

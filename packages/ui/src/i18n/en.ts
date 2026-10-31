@@ -69,6 +69,10 @@ export const en = {
     'Authorization code is missing. Please try signing in again.',
   errorOAuth: 'OAuth authentication failed. Please try again.',
   errorPasswordRequired: 'Set a password before doing this.',
+  errorEmailChangeConflict:
+    'This pending email has changed. Review the current request and try again.',
+  errorEmailChangePending:
+    'An email change is already pending. Confirm or cancel it before requesting another.',
   errorRateLimited: 'Too many attempts. Please try again later.',
   errorServiceUnavailable:
     'The service is temporarily unavailable. Please try again shortly.',
@@ -87,6 +91,14 @@ export const en = {
     'Verification email sent. Check your inbox to complete the change.',
   pendingEmailDescription: (email: string) =>
     `A verification link has been sent to ${email}. Please check your inbox to complete the change.`,
+  cancelEmailChangeButton: 'Cancel email change',
+  cancelEmailChangeTitle: 'Cancel this email change?',
+  cancelEmailChangeDescription: (email: string) =>
+    `Your current email will stay active. The verification link sent to ${email} will stop working.`,
+  keepEmailChange: 'Keep pending change',
+  confirmCancelEmailChange: 'Cancel email change',
+  emailChangeCancelled:
+    'Email change canceled. Your current email is unchanged.',
   saveChanges: 'Save changes',
   emailVerifiedBadge: 'Verified',
   emailUnverifiedBadge: 'Unverified',
@@ -105,15 +117,21 @@ export const en = {
   cancel: 'Cancel',
   confirm: 'Confirm',
   securitySubtitle: 'Update your password to keep your account secure.',
+  passwordSetupSubtitle: 'Set your password to keep your account secure.',
   passwordUpdated: 'Password updated successfully.',
   currentPassword: 'Current password',
   sendConfirmationCode: 'Email a confirmation code',
+  resendConfirmationCode: 'Resend code',
+  confirmationSending: 'Sending a confirmation code...',
+  confirmationCompleting: 'Confirming and completing your action...',
+  confirmationSent: (email: string) =>
+    `A confirmation code has been sent to ${email}. Enter it below to complete this action.`,
+  confirmationRequestRequired:
+    'Request a new confirmation code to complete this action.',
   confirmationCode: 'Eight-digit confirmation code',
   confirmationResendIn: (seconds: number) => `Resend in ${seconds}s`,
   reauthenticationDescription:
-    'Request a code sent to your verified email. It expires in five minutes and allows five attempts. Wait one minute before requesting another.',
-  reauthenticationReady:
-    'Identity confirmed. Complete the selected action within five minutes.',
+    'The code expires in five minutes and allows five attempts. Wait one minute before requesting another.',
   errorReauthenticationCooldown:
     'Wait one minute before requesting another code.',
   errorReauthentication:
@@ -121,6 +139,8 @@ export const en = {
   currentPasswordPlaceholder: 'Enter current password',
   updatePassword: 'Update password',
   setPassword: 'Set password',
+  setPasswordConfirmation:
+    'Confirm with an email code to set your password. All sessions will end. Sign in again to continue.',
   googleAccount: 'Google account',
   unlinkGoogle: 'Unlink Google',
   unlinkGoogleDescription:
@@ -141,7 +161,6 @@ export const en = {
     'Permanently delete your account and all associated data. This action cannot be undone.',
   deleteAccountConfirmation:
     'This action is permanent and cannot be undone. All your data will be deleted.',
-  confirmEmail: (email: string) => `Type "${email}" to confirm`,
   deleteMyAccount: 'Delete my account',
   mobileDevice: 'Mobile device',
   desktopDevice: 'Desktop device',

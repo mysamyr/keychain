@@ -460,6 +460,23 @@ export class PrismaAdapter implements IDatabaseAdapter {
     });
   }
 
+  async cancelPendingEmailChange(
+    userId: string,
+    expectedEmail: string
+  ): Promise<boolean> {
+    const result = await run(() =>
+      this.prisma.user.updateMany({
+        where: { id: userId, pendingEmail: expectedEmail },
+        data: {
+          pendingEmail: null,
+          pendingEmailTokenHash: null,
+          pendingEmailTokenExpiresAt: null,
+        },
+      })
+    );
+    return result.count === 1;
+  }
+
   async replacePasswordResetToken(
     userId: string,
     tokenHash: string,

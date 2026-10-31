@@ -136,6 +136,11 @@ export interface IDatabaseAdapter {
   consumeEmailVerificationToken(tokenHash: string): Promise<User | null>;
   /** Atomically consume the current, unexpired email-change token and update the email. */
   consumeEmailChangeToken(input: ConsumeEmailChangeToken): Promise<User | null>;
+  /** Atomically clear a pending email change only when its address still matches. */
+  cancelPendingEmailChange(
+    userId: string,
+    expectedEmail: string
+  ): Promise<boolean>;
   /** Delete all pending reauthentication challenges and authorization grants for a user. */
   clearReauthenticationGrants(userId: string): Promise<void>;
   /** Replace the user's previous reset token; never store the raw token. */

@@ -5,6 +5,7 @@ import {
   type User,
 } from '@mysamyr/core';
 import {
+  cancelEmailChangeSchema,
   changePasswordSchema,
   confirmEmailChangeSchema,
   confirmPasswordSchema,
@@ -14,6 +15,7 @@ import {
   verifyReauthenticationSchema,
   type ChangePasswordDTO,
   type ConfirmEmailChangeDTO,
+  type CancelEmailChangeDTO,
   type ConfirmPasswordDTO,
   type ReauthenticationDTO,
   type SensitiveActionDTO,
@@ -87,6 +89,24 @@ export function registerMeRoutes(router: Router, ctx: RouteContext): void {
         resolveRequestLocale(req)
       );
       cookies.clear(res, 'session', 'reauthentication');
+      res.sendStatus(204);
+    }
+  );
+
+  router.delete(
+    endpoints.cancelEmailChange,
+    requireAuth,
+    rateLimit('cancel-email-change', {
+      account: 5,
+      ip: 20,
+      windowMs: 15 * MINUTE,
+    }),
+    validateBody(cancelEmailChangeSchema),
+    async (req: JsonRequest<CancelEmailChangeDTO>, res: Response) => {
+      await authCore.profile.cancelEmailChange(
+        getAuth(req).userId,
+        req.body.expectedEmail
+      );
       res.sendStatus(204);
     }
   );

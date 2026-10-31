@@ -13,7 +13,7 @@ import { Modal } from '../shared/Modal.js';
 
 export function ProfileSection({ className }: { className?: string }) {
   const { t, languageTag, errorMessage, fieldError } = useTranslation();
-  const { user, updateUser, resendVerification } = useUser();
+  const { user, updateUser, resendVerification, cancelEmailChange } = useUser();
   const [isResending, setIsResending] = useState(false);
   const [verificationError, setVerificationError] = useState<Error | null>(
     null
@@ -27,11 +27,18 @@ export function ProfileSection({ className }: { className?: string }) {
   const [localError, setLocalError] = useState<MessageKey | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [password, setPassword] = useState('');
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [expectedPendingEmail, setExpectedPendingEmail] = useState('');
+  const [cancelStatus, setCancelStatus] = useState<
+    'idle' | 'loading' | 'success' | 'error'
+  >('idle');
+  const [cancelError, setCancelError] = useState<Error | null>(null);
 
   const handleSubmit = useCallback(
     (e: SyntheticEvent<HTMLFormElement>) => {
       e.preventDefault();
-      if (!user?.hasPassword || email === user.email) return;
+      if (!user?.hasPassword || user.pendingEmail || email === user.email)
+        return;
 
       setLocalError(null);
       setError(null);
@@ -48,13 +55,14 @@ export function ProfileSection({ className }: { className?: string }) {
   );
 
   const handleConfirmChange = useCallback(() => {
-    if (!user?.hasPassword) return;
+    if (!user?.hasPassword || user.pendingEmail || status === 'loading') return;
     setStatus('loading');
     setError(null);
 
     void (async () => {
       try {
-        await updateUser({ email, password });
+        const updated = await updateUser({ email, password });
+        setEmail(updated.email);
         setPassword('');
         setConfirmOpen(false);
         setStatus('success');
@@ -66,9 +74,33 @@ export function ProfileSection({ className }: { className?: string }) {
         setPassword('');
       }
     })();
-  }, [email, password, updateUser, user?.hasPassword]);
+  }, [email, password, status, updateUser, user]);
 
   const hasPendingEmail = !!user?.pendingEmail;
+
+  const handleCancelEmailChange = () => {
+    if (!expectedPendingEmail) return;
+    setCancelStatus('loading');
+    setCancelError(null);
+    void (async () => {
+      try {
+        await cancelEmailChange(expectedPendingEmail);
+        setEmail(user?.email ?? '');
+        setStatus('idle');
+        setError(null);
+        setCancelStatus('success');
+        setCancelOpen(false);
+        setExpectedPendingEmail('');
+      } catch (err: unknown) {
+        setCancelError(
+          err instanceof Error
+            ? err
+            : new Error('Failed to cancel email change')
+        );
+        setCancelStatus('error');
+      }
+    })();
+  };
 
   const handleResend = async () => {
     setIsResending(true);
@@ -101,6 +133,9 @@ export function ProfileSection({ className }: { className?: string }) {
       {status === 'success' && (
         <Alert variant="success" message={t.emailChangeSent} />
       )}
+      {cancelStatus === 'success' && (
+        <Alert variant="success" message={t.emailChangeCancelled} />
+      )}
       {(localError || error) && (
         <Alert
           variant="error"
@@ -108,11 +143,32 @@ export function ProfileSection({ className }: { className?: string }) {
         />
       )}
 
-      {hasPendingEmail && status !== 'success' && (
-        <Alert
-          variant="info"
-          message={t.pendingEmailDescription(user.pendingEmail ?? '')}
-        />
+      {hasPendingEmail && (
+        <div className="kc:space-y-3">
+          {status !== 'success' && (
+            <Alert
+              variant="info"
+              message={t.pendingEmailDescription(user.pendingEmail ?? '')}
+            />
+          )}
+          <div className="kc:flex kc:flex-col kc:items-stretch kc:gap-2 kc:sm:flex-row kc:sm:justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="kc:min-h-11 kc:w-full kc:sm:min-h-0 kc:sm:w-auto"
+              disabled={cancelStatus === 'loading'}
+              onClick={() => {
+                setExpectedPendingEmail(user.pendingEmail ?? '');
+                setCancelError(null);
+                setCancelStatus('idle');
+                setCancelOpen(true);
+              }}
+            >
+              {t.cancelEmailChangeButton}
+            </Button>
+          </div>
+        </div>
       )}
 
       {user && !user.isEmailVerified && (
@@ -160,7 +216,9 @@ export function ProfileSection({ className }: { className?: string }) {
           value={email}
           onChange={e => setEmail(e.target.value)}
           required
-          disabled={!user?.hasPassword || status === 'loading'}
+          disabled={
+            !user?.hasPassword || hasPendingEmail || status === 'loading'
+          }
           error={fieldError(error, 'email')}
         />
 
@@ -168,7 +226,9 @@ export function ProfileSection({ className }: { className?: string }) {
           <Button
             type="submit"
             loading={status === 'loading'}
-            disabled={!user?.hasPassword || email === user.email}
+            disabled={
+              !user?.hasPassword || hasPendingEmail || email === user.email
+            }
             size="sm"
             className="kc:min-h-11 kc:w-full kc:sm:min-h-0 kc:sm:w-auto"
           >
@@ -262,6 +322,46 @@ export function ProfileSection({ className }: { className?: string }) {
             disabled={!password || status === 'loading'}
           >
             {t.confirm}
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={cancelOpen}
+        onOpenChange={open => {
+          if (cancelStatus === 'loading') return;
+          setCancelOpen(open);
+          if (!open) {
+            setExpectedPendingEmail('');
+            setCancelError(null);
+          }
+        }}
+        title={t.cancelEmailChangeTitle}
+        description={t.cancelEmailChangeDescription(expectedPendingEmail)}
+      >
+        {cancelError && (
+          <Alert variant="error" message={errorMessage(cancelError)} />
+        )}
+        <div className="kc:mt-4 kc:flex kc:flex-col-reverse kc:gap-3 kc:sm:flex-row kc:sm:justify-end">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="kc:min-h-11 kc:sm:min-h-0"
+            disabled={cancelStatus === 'loading'}
+            onClick={() => setCancelOpen(false)}
+          >
+            {t.keepEmailChange}
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            size="sm"
+            className="kc:min-h-11 kc:sm:min-h-0"
+            loading={cancelStatus === 'loading'}
+            onClick={handleCancelEmailChange}
+          >
+            {t.confirmCancelEmailChange}
           </Button>
         </div>
       </Modal>

@@ -16,6 +16,8 @@ export const errorMessages = new Map<string, MessageKey>([
   ['MISSING_AUTHORIZATION_CODE', 'errorMissingAuthorizationCode'],
   ['VALIDATION_ERROR', 'errorValidation'],
   ['PASSWORD_REQUIRED', 'errorPasswordRequired'],
+  ['EMAIL_CHANGE_CONFLICT', 'errorEmailChangeConflict'],
+  ['EMAIL_CHANGE_PENDING', 'errorEmailChangePending'],
   ['RATE_LIMITED', 'errorRateLimited'],
   ['SERVICE_UNAVAILABLE', 'errorServiceUnavailable'],
   ['NETWORK_ERROR', 'errorNetwork'],

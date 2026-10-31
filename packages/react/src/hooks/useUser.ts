@@ -26,6 +26,19 @@ export function useUser() {
     [context]
   );
 
+  const cancelEmailChange = useCallback(
+    async (expectedEmail: string) => {
+      try {
+        await context.client.cancelEmailChange({ expectedEmail });
+      } catch (error: unknown) {
+        await context.mutateUser().catch(() => undefined);
+        throw error;
+      }
+      await context.mutateUser();
+    },
+    [context]
+  );
+
   const deleteAccount = useCallback(
     async (data: SensitiveActionDTO) => {
       await context.client.deleteMe(data);
@@ -93,6 +106,7 @@ export function useUser() {
     user: context.user,
     isLoaded: context.isLoaded,
     updateUser,
+    cancelEmailChange,
     deleteAccount,
     verifyEmail,
     resendVerification,

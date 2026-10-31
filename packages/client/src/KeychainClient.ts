@@ -6,6 +6,7 @@ import {
 
 import type {
   ChangePasswordDTO,
+  CancelEmailChangeDTO,
   ConfirmEmailChangeDTO,
   ConfirmPasswordDTO,
   ForgotPasswordDTO,
@@ -207,6 +208,18 @@ export class KeychainClient {
     await this.request(
       'POST',
       this.endpoints.confirmEmailChange,
+      data,
+      options
+    );
+  }
+
+  async cancelEmailChange(
+    data: CancelEmailChangeDTO,
+    options?: RequestOptions
+  ): Promise<void> {
+    await this.request(
+      'DELETE',
+      this.endpoints.cancelEmailChange,
       data,
       options
     );

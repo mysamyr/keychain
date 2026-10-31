@@ -44,8 +44,9 @@ verification consumes the token once. Resending is limited by a two-minute coold
 hashed-token pattern; successful reset updates the password and revokes existing sessions. Email-change tokens are
 stored as hashes and atomically consumed only when the exact stored token and unexpired database expiry match. The link
 opens a frontend page that requires an explicit click, which sends `POST /me/confirm-email-change` with `{ token }`, so link
-scanners cannot change the address. Confirmation updates the address and revokes sessions. Password login allows
-unverified accounts by default; set `requireEmailVerification` to `true` to require verification.
+scanners cannot change the address. An authenticated `DELETE /me/email-change` with `{ expectedEmail }` cancels only the
+matching pending request and invalidates its link. Confirmation updates the address and revokes sessions. Password login
+allows unverified accounts by default; set `requireEmailVerification` to `true` to require verification.
 
 Password hashes use a versioned Scrypt format with explicit configurable work factors; malformed stored hashes fail
 closed. Password changes and password resets revoke all sessions, clear reset tokens and reauthentication grants, and
@@ -68,9 +69,10 @@ Custom adapters implement `IDatabaseAdapter` and `IEmailAdapter` from `@mysamyr/
 
 - **Transactions:** `transaction(fn)` commits or rolls back every write made through its `tx` adapter. Calls on `tx`,
   including a nested `transaction`, reuse the same transaction. Isolation must be READ COMMITTED or stricter.
-- **Atomic methods:** token consumption (verification, password reset, email change), reauthentication challenge
-  creation (cooldown plus replacement), attempt counting, grant consumption, and outbox claiming must be safe under
-  concurrent calls through conditional updates or a transaction. Failed verification attempts must be committed.
+- **Atomic methods:** token consumption (verification, password reset, email change), pending email cancellation by
+  expected address, reauthentication challenge creation (cooldown plus replacement), attempt counting, grant
+  consumption, and outbox claiming must be safe under concurrent calls through conditional updates or a transaction.
+  Failed verification attempts must be committed.
 - **Uniqueness:** user `email` and `googleId`, every token-hash column, and outbox `dedupeKey` are unique. A duplicate
   `dedupeKey` is ignored silently. Violations of `email` or `googleId` throw `UniqueConstraintError`; unavailable
   storage throws `ServiceUnavailableError`. Anything else becomes a 500.

@@ -45,7 +45,7 @@ export function Modal({
               {description}
             </Dialog.Description>
           )}
-          <div className="kc:mt-4">{children}</div>
+          <div className="kc:mt-4 kc:space-y-4">{children}</div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

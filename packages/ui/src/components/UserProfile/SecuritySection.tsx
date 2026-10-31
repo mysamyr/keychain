@@ -1,6 +1,12 @@
 'use client';
 
-import { type SyntheticEvent, useCallback, useState } from 'react';
+import {
+  type SyntheticEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   AuthApiError,
@@ -20,8 +26,15 @@ import { ActionConfirmation } from './ActionConfirmation.js';
 export function SecuritySection({ className }: { className?: string }) {
   const { t, errorMessage, fieldError } = useTranslation();
   const { signOut } = useAuth();
-  const { user, deleteAccount, changePassword, unlinkGoogle, linkGoogle } =
-    useUser();
+  const {
+    user,
+    deleteAccount,
+    changePassword,
+    unlinkGoogle,
+    linkGoogle,
+    requestReauthentication,
+    verifyReauthentication,
+  } = useUser();
   const [unlinkStatus, setUnlinkStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
   >('idle');
@@ -29,7 +42,6 @@ export function SecuritySection({ className }: { className?: string }) {
   const [unlinkOpen, setUnlinkOpen] = useState(false);
   const [unlinkPassword, setUnlinkPassword] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
-  const [readyAction, setReadyAction] = useState<ReauthenticationAction>();
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkPassword, setLinkPassword] = useState('');
   const [linkStatus, setLinkStatus] = useState<'idle' | 'loading' | 'error'>(
@@ -45,58 +57,202 @@ export function SecuritySection({ className }: { className?: string }) {
   const [error, setError] = useState<Error | AuthApiError | null>(null);
   const [localError, setLocalError] = useState<MessageKey | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
   const [deleteStatus, setDeleteStatus] = useState<
     'idle' | 'loading' | 'error'
   >('idle');
   const [deleteError, setDeleteError] = useState<Error | AuthApiError | null>(
     null
   );
-
-  const handleSubmit = useCallback(
-    (e: SyntheticEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      setError(null);
-      setLocalError(null);
-
-      if (newPassword !== confirmPassword) {
-        setLocalError('passwordsMismatch');
-        return;
-      }
-
-      if (newPassword.length < 8) {
-        setLocalError('passwordTooShort');
-        return;
-      }
-
-      setStatus('loading');
-
-      void (async () => {
-        try {
-          await changePassword(currentPassword, newPassword);
-          setStatus('success');
-          setCurrentPassword('');
-          setNewPassword('');
-          setConfirmPassword('');
-          setReadyAction(undefined);
-        } catch (err: unknown) {
-          setError(
-            err instanceof Error ? err : new Error('Failed to update password')
-          );
-          setStatus('error');
-          setCurrentPassword('');
-          if (!user?.hasPassword) setReadyAction(undefined);
-        }
-      })();
-    },
-    [
-      currentPassword,
-      newPassword,
-      confirmPassword,
-      changePassword,
-      user?.hasPassword,
-    ]
+  const [confirmationAction, setConfirmationAction] =
+    useState<ReauthenticationAction>('set-password');
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [confirmationStage, setConfirmationStage] = useState<
+    'idle' | 'sending' | 'verifying' | 'executing'
+  >('idle');
+  const [challenge, setChallenge] = useState<{
+    action: ReauthenticationAction;
+    expiresAt: number;
+  } | null>(null);
+  const [code, setCode] = useState('');
+  const [confirmationError, setConfirmationError] = useState<Error | null>(
+    null
   );
+  const [cooldownUntil, setCooldownUntil] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
+  const confirmationLock = useRef(false);
+  const mounted = useRef(false);
+  const confirmationBusy = confirmationStage !== 'idle';
+  const confirmationPending =
+    confirmationStage === 'verifying' || confirmationStage === 'executing';
+  const sendingAction =
+    confirmationStage === 'sending' ? confirmationAction : undefined;
+  const busy =
+    confirmationBusy ||
+    status === 'loading' ||
+    deleteStatus === 'loading' ||
+    unlinkStatus === 'loading' ||
+    linkStatus === 'loading';
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!cooldownUntil) return;
+    const update = () => {
+      const remaining = Math.max(
+        0,
+        Math.ceil((cooldownUntil - Date.now()) / 1000)
+      );
+      setCooldown(remaining);
+      if (remaining === 0) setCooldownUntil(0);
+    };
+    update();
+    const interval = window.setInterval(update, 1000);
+    return () => window.clearInterval(interval);
+  }, [cooldownUntil]);
+
+  const requestCode = async (action: ReauthenticationAction) => {
+    if (confirmationLock.current || cooldownUntil > Date.now()) return;
+    confirmationLock.current = true;
+    setConfirmationStage('sending');
+    setConfirmationError(null);
+    setChallenge(null);
+    setCode('');
+    try {
+      await requestReauthentication(action);
+      if (!mounted.current) return;
+      setChallenge({ action, expiresAt: Date.now() + 5 * 60_000 });
+      setCooldownUntil(Date.now() + 60_000);
+      setCooldown(60);
+    } catch (error) {
+      if (!mounted.current) return;
+      setConfirmationError(
+        error instanceof Error ? error : new Error('Confirmation failed')
+      );
+      if (
+        error instanceof AuthApiError &&
+        error.code === 'REAUTHENTICATION_COOLDOWN'
+      ) {
+        setCooldownUntil(Date.now() + 60_000);
+        setCooldown(60);
+      }
+    } finally {
+      confirmationLock.current = false;
+      if (mounted.current) setConfirmationStage('idle');
+    }
+  };
+
+  const openConfirmation = (action: ReauthenticationAction) => {
+    if (sendingAction === action) {
+      setConfirmationOpen(true);
+      return;
+    }
+    if (confirmationLock.current || busy) return;
+    setConfirmationAction(action);
+    setConfirmationOpen(true);
+    setCode('');
+    setConfirmationError(null);
+    if (challenge?.action !== action || challenge.expiresAt <= Date.now()) {
+      setChallenge(null);
+      void requestCode(action);
+    }
+  };
+
+  const closeConfirmation = () => {
+    if (confirmationPending) return;
+    setConfirmationOpen(false);
+    setCode('');
+  };
+
+  const confirmAction = async () => {
+    if (
+      confirmationLock.current ||
+      challenge?.action !== confirmationAction ||
+      !/^\d{8}$/.test(code)
+    ) {
+      return;
+    }
+    confirmationLock.current = true;
+    setConfirmationStage('verifying');
+    setConfirmationError(null);
+    try {
+      await verifyReauthentication(confirmationAction, code);
+      if (!mounted.current) return;
+      // Verification consumes the challenge, even if the mutation fails.
+      setChallenge(null);
+      setCode('');
+      setConfirmationStage('executing');
+      if (confirmationAction === 'set-password') {
+        await changePassword('', newPassword);
+        if (!mounted.current) return;
+        setNewPassword('');
+        setConfirmPassword('');
+        setStatus('success');
+      } else {
+        await deleteAccount({});
+      }
+      if (mounted.current) setConfirmationOpen(false);
+    } catch (error) {
+      if (!mounted.current) return;
+      setConfirmationError(
+        error instanceof Error ? error : new Error('Confirmation failed')
+      );
+      setCode('');
+    } finally {
+      confirmationLock.current = false;
+      if (mounted.current) setConfirmationStage('idle');
+    }
+  };
+
+  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (sendingAction === 'set-password') {
+      setConfirmationOpen(true);
+      return;
+    }
+    if (busy || confirmationLock.current) return;
+    setError(null);
+    setLocalError(null);
+    setStatus('idle');
+
+    if (newPassword !== confirmPassword) {
+      setLocalError('passwordsMismatch');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setLocalError('passwordTooShort');
+      return;
+    }
+
+    if (!user?.hasPassword) {
+      openConfirmation('set-password');
+      return;
+    }
+
+    setStatus('loading');
+    void (async () => {
+      try {
+        await changePassword(currentPassword, newPassword);
+        if (!mounted.current) return;
+        setStatus('success');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } catch (err: unknown) {
+        if (!mounted.current) return;
+        setError(
+          err instanceof Error ? err : new Error('Failed to update password')
+        );
+        setStatus('error');
+        setCurrentPassword('');
+      }
+    })();
+  };
 
   const handleSignOutAll = useCallback(() => {
     void signOut();
@@ -108,19 +264,13 @@ export function SecuritySection({ className }: { className?: string }) {
         <h3 className="kc:text-lg kc:font-medium kc:text-gray-900">
           {t.security}
         </h3>
-        <p className="kc:text-sm kc:text-gray-500">{t.securitySubtitle}</p>
+        <p className="kc:text-sm kc:text-gray-500">
+          {user?.hasPassword ? t.securitySubtitle : t.passwordSetupSubtitle}
+        </p>
       </div>
 
       {status === 'success' && (
         <Alert variant="success" message={t.passwordUpdated} />
-      )}
-      {user && !user.hasPassword && (
-        <ActionConfirmation
-          action="set-password"
-          confirmed={readyAction === 'set-password'}
-          onRequested={() => setReadyAction(undefined)}
-          onConfirmed={() => setReadyAction('set-password')}
-        />
       )}
       {(localError || error) && (
         <Alert
@@ -141,7 +291,7 @@ export function SecuritySection({ className }: { className?: string }) {
             required
             placeholder={t.currentPasswordPlaceholder}
             error={fieldError(error, 'oldPassword')}
-            disabled={status === 'loading'}
+            disabled={busy}
           />
         )}
 
@@ -155,7 +305,7 @@ export function SecuritySection({ className }: { className?: string }) {
           required
           placeholder={t.newPasswordPlaceholder}
           error={fieldError(error, 'newPassword')}
-          disabled={status === 'loading'}
+          disabled={busy}
         />
 
         <Input
@@ -168,17 +318,14 @@ export function SecuritySection({ className }: { className?: string }) {
           required
           placeholder={t.confirmNewPassword}
           error={fieldError(error, 'confirmPassword')}
-          disabled={status === 'loading'}
+          disabled={busy}
         />
 
         <div className="kc:flex kc:justify-end">
           <Button
             type="submit"
             loading={status === 'loading'}
-            disabled={
-              status === 'loading' ||
-              (!user?.hasPassword && readyAction !== 'set-password')
-            }
+            disabled={busy && sendingAction !== 'set-password'}
             size="sm"
             className="kc:min-h-11 kc:w-full kc:sm:min-h-0 kc:sm:w-auto"
           >
@@ -214,7 +361,7 @@ export function SecuritySection({ className }: { className?: string }) {
               variant="danger"
               size="sm"
               className="kc:min-h-11 kc:w-full kc:shrink-0 kc:whitespace-nowrap kc:sm:min-h-0 kc:sm:w-auto"
-              disabled={!user.hasPassword || status === 'loading'}
+              disabled={!user.hasPassword || busy}
               loading={unlinkStatus === 'loading'}
               onClick={() => {
                 setUnlinkOpen(true);
@@ -254,7 +401,7 @@ export function SecuritySection({ className }: { className?: string }) {
                 setLinkStatus('idle');
                 setLinkError(null);
               }}
-              disabled={status === 'loading'}
+              disabled={busy}
               className="kc:min-h-11 kc:w-full kc:shrink-0 kc:whitespace-nowrap kc:sm:min-h-0 kc:sm:w-auto"
             />
           </div>
@@ -275,6 +422,7 @@ export function SecuritySection({ className }: { className?: string }) {
             variant="danger"
             size="sm"
             onClick={handleSignOutAll}
+            disabled={busy}
             className="kc:min-h-11 kc:w-full kc:shrink-0 kc:whitespace-nowrap kc:sm:min-h-0 kc:sm:w-auto"
           >
             {t.signOut}
@@ -295,10 +443,14 @@ export function SecuritySection({ className }: { className?: string }) {
           <Button
             variant="danger"
             size="sm"
+            disabled={busy && sendingAction !== 'delete-account'}
             className="kc:min-h-11 kc:w-full kc:shrink-0 kc:whitespace-nowrap kc:sm:min-h-0 kc:sm:w-auto"
             onClick={() => {
+              if (!user?.hasPassword) {
+                openConfirmation('delete-account');
+                return;
+              }
               setDeleteOpen(true);
-              setDeleteConfirmEmail('');
               setDeletePassword('');
               setDeleteStatus('idle');
               setDeleteError(null);
@@ -429,50 +581,92 @@ export function SecuritySection({ className }: { className?: string }) {
       </Modal>
 
       <Modal
+        open={confirmationOpen}
+        onOpenChange={open => {
+          if (!open) closeConfirmation();
+        }}
+        title={
+          confirmationAction === 'set-password'
+            ? t.setPassword
+            : t.deleteAccount
+        }
+        description={
+          confirmationAction === 'set-password'
+            ? t.setPasswordConfirmation
+            : t.deleteAccountConfirmation
+        }
+      >
+        <ActionConfirmation
+          email={user?.email ?? ''}
+          label={
+            confirmationAction === 'set-password'
+              ? t.setPassword
+              : t.deleteMyAccount
+          }
+          destructive={confirmationAction === 'delete-account'}
+          sent={challenge?.action === confirmationAction}
+          sending={confirmationStage === 'sending'}
+          pending={confirmationPending}
+          cooldown={cooldown}
+          code={code}
+          error={confirmationError}
+          onCodeChange={setCode}
+          onRequest={() => void requestCode(confirmationAction)}
+          onConfirm={() => void confirmAction()}
+          onCancel={closeConfirmation}
+        />
+      </Modal>
+
+      <Modal
         open={deleteOpen}
         onOpenChange={open => {
           if (deleteStatus === 'loading') return;
           setDeleteOpen(open);
-          if (!open) {
-            setDeletePassword('');
-            if (readyAction === 'delete-account') setReadyAction(undefined);
-          }
+          if (!open) setDeletePassword('');
         }}
         title={t.deleteAccount}
         description={t.deleteAccountConfirmation}
       >
-        <div className="kc:space-y-4">
+        <form
+          className="kc:space-y-4"
+          onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
+            event.preventDefault();
+            if (!deletePassword || deleteStatus === 'loading') return;
+            setDeleteStatus('loading');
+            setDeleteError(null);
+            void (async () => {
+              try {
+                await deleteAccount({ password: deletePassword });
+                if (mounted.current) setDeleteOpen(false);
+              } catch (err: unknown) {
+                if (!mounted.current) return;
+                setDeleteError(
+                  err instanceof Error
+                    ? err
+                    : new Error('Failed to delete account')
+                );
+                setDeleteStatus('error');
+              } finally {
+                if (mounted.current) setDeletePassword('');
+              }
+            })();
+          }}
+        >
           {deleteError && (
             <Alert variant="error" message={errorMessage(deleteError)} />
           )}
-          {user?.hasPassword ? (
-            <Input
-              label={t.currentPassword}
-              type="password"
-              autoComplete="current-password"
-              value={deletePassword}
-              onChange={event => setDeletePassword(event.target.value)}
-              disabled={deleteStatus === 'loading'}
-              required
-            />
-          ) : (
-            <ActionConfirmation
-              action="delete-account"
-              confirmed={readyAction === 'delete-account'}
-              onRequested={() => setReadyAction(undefined)}
-              onConfirmed={() => setReadyAction('delete-account')}
-            />
-          )}
           <Input
-            label={t.confirmEmail(user?.email ?? '')}
-            className="kc:text-base kc:sm:text-sm"
-            type="email"
-            value={deleteConfirmEmail}
-            onChange={e => setDeleteConfirmEmail(e.target.value)}
-            placeholder={user?.email ?? ''}
+            label={t.currentPassword}
+            type="password"
+            autoComplete="current-password"
+            value={deletePassword}
+            onChange={event => setDeletePassword(event.target.value)}
+            disabled={deleteStatus === 'loading'}
+            required
           />
           <div className="kc:flex kc:flex-col-reverse kc:gap-3 kc:sm:flex-row kc:sm:justify-end">
             <Button
+              type="button"
               variant="secondary"
               size="sm"
               className="kc:min-h-11 kc:sm:min-h-0"
@@ -480,46 +674,22 @@ export function SecuritySection({ className }: { className?: string }) {
               onClick={() => {
                 setDeleteOpen(false);
                 setDeletePassword('');
-                if (readyAction === 'delete-account') setReadyAction(undefined);
               }}
             >
               {t.cancel}
             </Button>
             <Button
+              type="submit"
               variant="danger"
               size="sm"
               className="kc:min-h-11 kc:sm:min-h-0"
-              disabled={
-                deleteConfirmEmail !== user?.email ||
-                deleteStatus === 'loading' ||
-                (user?.hasPassword
-                  ? !deletePassword
-                  : readyAction !== 'delete-account')
-              }
+              disabled={!deletePassword || deleteStatus === 'loading'}
               loading={deleteStatus === 'loading'}
-              onClick={() => {
-                setDeleteStatus('loading');
-                setDeleteError(null);
-                void (async () => {
-                  try {
-                    await deleteAccount({ password: deletePassword });
-                  } catch (err: unknown) {
-                    setDeleteError(
-                      err instanceof Error
-                        ? err
-                        : new Error('Failed to delete account')
-                    );
-                    setDeleteStatus('error');
-                    setDeletePassword('');
-                    if (!user?.hasPassword) setReadyAction(undefined);
-                  }
-                })();
-              }}
             >
               {t.deleteMyAccount}
             </Button>
           </div>
-        </div>
+        </form>
       </Modal>
     </div>
   );

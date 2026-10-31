@@ -24,51 +24,53 @@
   );
 }
 
-/* Minimal reset limited to Keychain components; zero specificity so utilities win. */
-:where([data-kc], [data-kc] *, [data-kc] ::before, [data-kc] ::after) {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  border: 0 solid;
-}
+@layer base {
+  /* Minimal reset limited to Keychain components; zero specificity so utilities win. */
+  :where([data-kc], [data-kc] *, [data-kc] ::before, [data-kc] ::after) {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
 
-:where([data-kc]) {
-  font-family: var(--kc-font-family, 'Inter', system-ui, sans-serif);
-  line-height: 1.5;
-  -webkit-text-size-adjust: 100%;
-}
+  :where([data-kc]) {
+    font-family: var(--kc-font-family, 'Inter', system-ui, sans-serif);
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
 
-:where(
-  [data-kc] button,
-  [data-kc] input,
-  [data-kc] select,
-  [data-kc] textarea
-) {
-  font: inherit;
-  color: inherit;
-  background-color: transparent;
-}
+  :where(
+    [data-kc] button,
+    [data-kc] input,
+    [data-kc] select,
+    [data-kc] textarea
+  ) {
+    font: inherit;
+    color: inherit;
+    background-color: transparent;
+  }
 
-:where([data-kc] button) {
-  cursor: pointer;
-}
+  :where([data-kc] button) {
+    cursor: pointer;
+  }
 
-:where([data-kc] h1, [data-kc] h2, [data-kc] h3, [data-kc] p) {
-  font-size: inherit;
-  font-weight: inherit;
-  overflow-wrap: break-word;
-}
+  :where([data-kc] h1, [data-kc] h2, [data-kc] h3, [data-kc] p) {
+    font-size: inherit;
+    font-weight: inherit;
+    overflow-wrap: break-word;
+  }
 
-:where([data-kc] a) {
-  color: inherit;
-  text-decoration: inherit;
-}
+  :where([data-kc] a) {
+    color: inherit;
+    text-decoration: inherit;
+  }
 
-:where([data-kc] ul, [data-kc] ol) {
-  list-style: none;
-}
+  :where([data-kc] ul, [data-kc] ol) {
+    list-style: none;
+  }
 
-:where([data-kc] svg, [data-kc] img) {
-  display: block;
-  vertical-align: middle;
+  :where([data-kc] svg, [data-kc] img) {
+    display: block;
+    vertical-align: middle;
+  }
 }

@@ -72,6 +72,10 @@ export const uk = {
     'Код авторизації відсутній. Спробуйте ввійти ще раз.',
   errorOAuth: 'Не вдалося ввійти через OAuth. Спробуйте ще раз.',
   errorPasswordRequired: 'Спершу встановіть пароль.',
+  errorEmailChangeConflict:
+    'Очікувана адреса змінилася. Перевірте актуальний запит і спробуйте ще раз.',
+  errorEmailChangePending:
+    'Зміна пошти вже очікує підтвердження. Підтвердьте або скасуйте її, перш ніж надсилати новий запит.',
   errorRateLimited: 'Забагато спроб. Спробуйте пізніше.',
   errorServiceUnavailable:
     'Сервіс тимчасово недоступний. Спробуйте трохи згодом.',
@@ -90,6 +94,14 @@ export const uk = {
     'Лист для підтвердження надіслано. Перевірте пошту, щоб завершити зміну.',
   pendingEmailDescription: (email: string) =>
     `Посилання для підтвердження надіслано на ${email}. Перевірте пошту, щоб завершити зміну.`,
+  cancelEmailChangeButton: 'Скасувати зміну пошти',
+  cancelEmailChangeTitle: 'Скасувати зміну електронної пошти?',
+  cancelEmailChangeDescription: (email: string) =>
+    `Поточна адреса залишиться активною. Посилання для підтвердження, надіслане на ${email}, більше не працюватиме.`,
+  keepEmailChange: 'Залишити запит',
+  confirmCancelEmailChange: 'Скасувати зміну пошти',
+  emailChangeCancelled:
+    'Зміну електронної пошти скасовано. Поточна адреса не змінилася.',
   saveChanges: 'Зберегти зміни',
   emailVerifiedBadge: 'Підтверджено',
   emailUnverifiedBadge: 'Не підтверджено',
@@ -108,16 +120,22 @@ export const uk = {
   cancel: 'Скасувати',
   confirm: 'Підтвердити',
   securitySubtitle: 'Оновіть пароль, щоб захистити обліковий запис.',
+  passwordSetupSubtitle: 'Встановіть пароль, щоб захистити обліковий запис.',
   passwordUpdated: 'Пароль успішно оновлено.',
   currentPassword: 'Поточний пароль',
   sendConfirmationCode: 'Надіслати код підтвердження',
+  resendConfirmationCode: 'Надіслати код повторно',
+  confirmationSending: 'Надсилаємо код підтвердження...',
+  confirmationCompleting: 'Підтверджуємо та виконуємо вашу дію...',
+  confirmationSent: (email: string) =>
+    `Код підтвердження надіслано на ${email}. Введіть його нижче, щоб завершити цю дію.`,
+  confirmationRequestRequired:
+    'Запросіть новий код підтвердження, щоб завершити цю дію.',
   confirmationCode: 'Восьмизначний код підтвердження',
   confirmationResendIn: (seconds: number) =>
     `Повторний запит через ${seconds} с`,
   reauthenticationDescription:
-    'Запросіть код на підтверджену пошту. Він діє п’ять хвилин і дозволяє п’ять спроб. Повторний запит можливий через хвилину.',
-  reauthenticationReady:
-    'Особу підтверджено. Завершіть вибрану дію протягом п’яти хвилин.',
+    'Код діє п’ять хвилин і дозволяє п’ять спроб. Повторний запит можливий через хвилину.',
   errorReauthenticationCooldown:
     'Зачекайте хвилину перед повторним запитом коду.',
   errorReauthentication:
@@ -125,6 +143,8 @@ export const uk = {
   currentPasswordPlaceholder: 'Введіть поточний пароль',
   updatePassword: 'Оновити пароль',
   setPassword: 'Встановити пароль',
+  setPasswordConfirmation:
+    'Підтвердьте дію кодом з електронної пошти, щоб встановити пароль. Усі сеанси буде завершено. Увійдіть знову, щоб продовжити.',
   googleAccount: 'Обліковий запис Google',
   unlinkGoogle: "Від'єднати Google",
   unlinkGoogleDescription:
@@ -144,7 +164,6 @@ export const uk = {
   deleteAccountDescription:
     "Назавжди видаліть обліковий запис і всі пов'язані дані. Цю дію неможливо скасувати.",
   deleteAccountConfirmation: 'Ця дія незворотна. Усі ваші дані буде видалено.',
-  confirmEmail: (email: string) => `Введіть «${email}» для підтвердження`,
   deleteMyAccount: 'Видалити мій обліковий запис',
   mobileDevice: 'Мобільний пристрій',
   desktopDevice: "Комп'ютер",

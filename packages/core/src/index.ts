@@ -63,6 +63,8 @@ export {
   ValidationError,
   UniqueConstraintError,
   UserAlreadyExistsError,
+  EmailChangeConflictError,
+  EmailChangePendingError,
   InvalidCredentialsError,
   SessionExpiredError,
   SessionNotFoundError,

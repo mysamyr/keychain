@@ -51,6 +51,26 @@ export class UserAlreadyExistsError extends AuthError {
   }
 }
 
+export class EmailChangeConflictError extends AuthError {
+  constructor() {
+    super(
+      'The pending email change has changed. Refresh and try again.',
+      409,
+      'EMAIL_CHANGE_CONFLICT'
+    );
+  }
+}
+
+export class EmailChangePendingError extends AuthError {
+  constructor() {
+    super(
+      'An email change is already pending. Confirm or cancel it before requesting another.',
+      409,
+      'EMAIL_CHANGE_PENDING'
+    );
+  }
+}
+
 export class InvalidCredentialsError extends AuthError {
   constructor() {
     super('Invalid email or password', 401, 'INVALID_CREDENTIALS');

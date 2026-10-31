@@ -34,6 +34,8 @@ export interface AuthEndpoints {
   unlinkGoogle: string;
   /** POST – atomically confirm an email change with `{ token }` */
   confirmEmailChange: string;
+  /** DELETE – cancel the matching pending email change */
+  cancelEmailChange: string;
   /** GET – list all active sessions for the current user */
   getSessions: string;
   /** DELETE – revoke a specific session by id (`:id` param) */
@@ -69,6 +71,7 @@ export const DEFAULT_ENDPOINTS: AuthEndpoints = {
   changePassword: '/me/change-password',
   unlinkGoogle: '/me/google',
   confirmEmailChange: '/me/confirm-email-change',
+  cancelEmailChange: '/me/email-change',
   getSessions: '/sessions',
   revokeSession: '/sessions/:id',
   revokeOtherSessions: '/sessions/revoke-others',

@@ -27,6 +27,10 @@ export const confirmEmailChangeSchema = z.object({
   token: z.string().trim().min(1),
 });
 
+export const cancelEmailChangeSchema = z.object({
+  expectedEmail: emailSchema,
+});
+
 export const resendVerificationSchema = z.object({
   email: emailSchema,
 });
@@ -113,6 +117,7 @@ export type LoginDTO = z.input<typeof loginSchema>;
 export type RegisterDTO = z.input<typeof registerSchema>;
 export type VerifyEmailDTO = z.input<typeof verifyEmailSchema>;
 export type ConfirmEmailChangeDTO = z.input<typeof confirmEmailChangeSchema>;
+export type CancelEmailChangeDTO = z.input<typeof cancelEmailChangeSchema>;
 export type ResendVerificationDTO = z.input<typeof resendVerificationSchema>;
 export type ConfirmPasswordDTO = z.input<typeof confirmPasswordSchema>;
 export type ChangePasswordDTO = z.input<typeof changePasswordSchema>;
